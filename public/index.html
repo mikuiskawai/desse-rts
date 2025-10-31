@@ -1,0 +1,205 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Project Gaming</title>
+  <!-- 공통 스타일 -->
+  <link rel="stylesheet" href="style.css" />
+  <!-- 모바일 보기 최적화 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+
+<body>
+  <!-- =========================================================
+       홈 / 매칭 대기 섹션
+       - Start 버튼 클릭 → 소켓 매칭 시작
+       - 로더는 .hidden 클래스로 표시/비표시 전환
+       ========================================================= -->
+  <div id="home" class="home-screen">
+    <div class="home-backdrop"> </div>
+    <div class="home-shell">
+      <header class="home-topband blk-pad-sm">
+        <div class="home-logo">Project Gaming</div>
+      </header>
+      <div class="home-layout">
+        <section class="home-hero blk blk-pad-lg" aria-labelledby="homeTitle">
+          <h1 id="homeTitle">게임 시작</h1>
+          <p class="home-tagline">원정대를 이끌고 모험을 떠나세요.</p>
+          <div class="home-form">
+            <div class="home-form-row">
+              <input type="text" id="nickname" placeholder="Enter your nickname" />
+              <button id="startBtn">Start</button>
+            </div>
+            <p id="matchStatus" class="home-status"></p>
+            <div id="loader" class="loader hidden" aria-hidden="true"></div>
+          </div>
+        </section>
+        <aside class="home-subcmd-panel blk blk-pad-lg" aria-labelledby="subCommanderTitle">
+          <div class="home-subcmd-head">
+            <h2 id="subCommanderTitle">부사령관 선택</h2>
+            <p class="home-subcmd-desc">원정에 동행할 부사령관을 고르고 보너스를 받아보세요.</p>
+          </div>
+          <div id="subCommanderWrap" class="subcmds">
+            <div class="subcmd" id="scBtn1" data-key="prod_slow" role="button" tabindex="0">
+              <img src="/units/commander1.gif" alt="생산 속도 10% 감소" />
+              <div class="sc-name">생산 중재자</div>
+              <div class="sc-desc">병력 생산 속도가 10% 빨라집니다.</div>
+            </div>
+            <div class="subcmd" id="scBtn2" data-key="move_fast" role="button" tabindex="0">
+              <img src="/units/commander2.gif" alt="이동 속도 20% 증가" />
+              <div class="sc-name">기동 감독관</div>
+              <div class="sc-desc">아군 유닛의 이동 속도가 20% 빨라집니다.</div>
+            </div>
+            <div class="subcmd" id="scBtn3" data-key="cost_discount" role="button" tabindex="0">
+              <img src="/units/commander3.gif" alt="유닛 비용 10% 감소" />
+              <div class="sc-name">물류 분석가</div>
+              <div class="sc-desc">모든 유닛의 훈련 비용이 10% 절감됩니다.</div>
+            </div>
+            <div class="subcmd" id="scBtn4" data-key="start_worker4" role="button" tabindex="0">
+              <img src="/units/commander4.gif" alt="초기 일꾼 4명" />
+              <div class="sc-name">전초기지 장교</div>
+              <div class="sc-desc">전투 시작 시 일꾼 4명으로 출발합니다.</div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </div>
+  <!-- =========================================================       렌더 타겟 캔버스 / 하단 UI 이미지
+       - 캔버스: 메인 게임 렌더링 영역
+       - #ui: 하단 장식용 이미지(포인터 이벤트 없음)
+       ========================================================= -->
+  <canvas id="gameCanvas"></canvas>
+  <div id="minimapWrap" class="minimap hidden">
+    <canvas id="minimap" width="200" height="200"></canvas>
+  </div>
+  <!-- Simple resource bar -->
+  <div id="resourceBar" class="hidden"
+    style="position: fixed; left: 16px; top: 16px; color: #fff; background: rgba(20,20,24,0.85); padding: 8px 10px; border-radius: 8px; font-size: 14px; z-index: 1200;">
+    <span>Magnetite: <b id="res401">0</b></span>
+    <span style="margin-left:12px;">Petroleum: <b id="res402">0</b></span>
+    <span style="margin-left:12px;">Beryl: <b id="res403">0</b></span>
+    <span id="gameTimer" style="margin-left:12px;">Time: 00:00</span>
+  </div>
+
+  <!-- =========================================================
+       건물 패널 (선택한 "내" 건물에서 유닛 생산)
+       - main.js에서 참조하는 ID: bpIcon, bpTitle, bpDesc,
+                                   addUnitBtn1, addUnitBtn2
+       - 인라인 위치 스타일: 중앙 하단 고정(필요 스타일만 유지)
+       ========================================================= -->
+  <div id="buildingPanel" class="hidden" style="
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(20,20,24,0.9);
+      color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    ">
+    <img id="bpIcon" src="" alt="" style="width:40px;height:40px;object-fit:contain;" />
+    <div style="min-width:140px">
+      <div id="bpTitle" style="font-weight:600">?</div>
+      <div id="bpDesc" style="opacity:1;font-size:12px">건물</div>
+    </div>
+    <button id="addUnitBtn1" style="padding:8px 12px;border:0;border-radius:8px;cursor:pointer;">-</button>
+    <button id="addUnitBtn2" style="padding:8px 12px;border:0;border-radius:8px;cursor:pointer;">-</button>
+    <div id="queueWrap" class="hidden" style="display:flex;align-items:center;gap:8px;margin-left:8px;">
+      <span style="opacity:1;font-size:12px;">Queue</span>
+      <div id="queueList" style="display:flex;gap:6px;align-items:center;max-width:320px;flex-wrap:wrap;"></div>
+    </div>
+    <button id="cancelBuildBtn" class="hidden"
+      style="margin-left:8px;padding:6px 10px;border:0;border-radius:8px;background:#ef4444;color:#fff;cursor:pointer;">Cancel
+      Build</button>
+  </div>
+
+  <!-- =========================================================
+       빌드 패널 (필드에 건물 배치)
+       - main.js에서 참조하는 ID: buildIcon, buildTitle, buildDesc,
+                                   addBuildingBtn1~4
+       - ※ 기존 코드의 ID 오타/중복 수정:
+           bpIcon → buildIcon, buildtitle → buildTitle
+       ========================================================= -->
+  <div id="buildPanel" class="hidden">
+    <img id="buildIcon" src="" alt="" style="width:40px;height:40px;object-fit:contain;" />
+    <div style="min-width:140px">
+      <div id="buildTitle" style="font-weight:600">?</div>
+      <div id="buildDesc" style="opacity:1;font-size:12px">건물을 짓습니다.</div>
+    </div>
+    <button id="addBuildingBtn1">nexus</button>
+    <button id="addBuildingBtn2">armory</button>
+    <button id="addBuildingBtn3">barracks</button>
+    <button id="addBuildingBtn4">factory</button>
+    <button id="addBuildingBtn5">mine</button>
+  </div>
+
+  <!-- =========================================================
+       유닛 정보 패널
+       - main.js에서 참조하는 ID:
+         unitIcon, unitName, unitType, unitHpFill, unitHpText,
+         unitAtk, unitArmor, unitRange, unitPeriod, unitSpeed,
+         unitMulti, multiCount
+       ========================================================= -->
+  <div id="unitInfo" class="unit-panel hidden">
+    <div class="unit-header">
+      <img id="unitIcon" class="unit-icon" alt="" />
+      <div class="unit-title">
+        <div id="unitName" class="unit-name">?</div>
+        <div id="unitType" class="unit-type">?</div>
+      </div>
+    </div>
+
+    <div class="unit-hp">
+      <div class="unit-hp-bar">
+        <div id="unitHpFill" class="unit-hp-fill" style="width:0%"></div>
+      </div>
+      <div id="unitHpText" class="unit-hp-text">0 / 0</div>
+    </div>
+    <div id="unitMulti" class="unit-multi hidden">
+      선택된 유닛: <b id="multiCount">1</b>기
+    </div>
+  </div>
+
+  <!-- =========================================================
+       스크립트
+       - socket.io 클라이언트 → /socket.io/socket.io.js
+       - 게임 로직 모듈 → main.js
+       ========================================================= -->
+  <!-- Toast notification (before scripts) -->
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="main.js"></script>
+  <script>
+    document.getElementById('subCommanderWrap')?.addEventListener('click', (e) => {
+      const card = e.target.closest('.subcmd');
+      if (!card) return;
+      // 단일 선택 모드
+      document.querySelectorAll('.subcmds .subcmd').forEach(el => el.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+
+    // 키보드 접근성(엔터/스페이스 선택)
+    document.getElementById('subCommanderWrap')?.addEventListener('keydown', (e) => {
+      const card = e.target.closest('.subcmd');
+      if (!card) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click(); 
+      }
+    });
+  </script>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+</body>
+
+</html>

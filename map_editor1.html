@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8">
+  <title>Tilemap Editor — Categories, Buildings, Resources (Vanilla JS) + Symmetry</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      color-scheme: dark
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: #0b1120;
+      color: #e5e7eb;
+      font-family: system-ui, sans-serif;
+      user-select: none
+    }
+
+    header {
+      padding: 10px 14px
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0 0 6px
+    }
+
+    .wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 400px;
+      gap: 10px;
+      padding: 10px
+    }
+
+    .panel {
+      background: #111827aa;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 10px
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    button,
+    input,
+    textarea {
+      background: #0f172a;
+      color: #e5e7eb;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 8px
+    }
+
+    button:hover {
+      filter: brightness(1.1)
+    }
+
+    label {
+      font-size: 12px;
+      opacity: .85
+    }
+
+    .tiny {
+      font-size: 12px;
+      opacity: .7
+    }
+
+    .chip {
+      border-radius: 10px;
+      padding: 8px 10px;
+      border: 1px solid #1f2937;
+      cursor: pointer
+    }
+
+    .chip.active {
+      outline: 2px solid #22d3ee
+    }
+
+    .chip.cat1 {
+      outline: 1px solid #22c55e55
+    }
+
+    .chip.cat2 {
+      outline: 1px solid #ef444455
+    }
+
+    .chip.cat3 {
+      outline: 1px solid #60a5fa55
+    }
+
+    .chip.cat4 {
+      outline: 1px solid #f59e0b55
+    }
+
+    #canvasWrap {
+      height: 72vh;
+      overflow: hidden;
+      border-radius: 10px
+    }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      touch-action: none;
+      cursor: crosshair
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px
+    }
+
+    .k-sep {
+      width: 100%;
+      height: 1px;
+      background: #1f2937;
+      margin: 8px 0
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>타일맵 에디터 (카테고리/건물/자원) + 대칭/축</h1>
+    <div class="tiny">클릭/드래그 페인트 · 지우개 기본값 복원 · 맵 크기 변경 · 2D 텍스트 I/O · 패닝/줌 · <b>대칭 편집</b> · <b>중심축 표시</b></div>
+  </header>
+
+  <div class="wrap">
+    <!-- 캔버스 패널 -->
+    <div class="panel">
+      <div id="canvasWrap">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label>줌
+          <input type="range" id="zoom" min="0.25" max="4" step="0.05" value="1">
+        </label>
+        <button id="fitBtn">맞춤</button>
+        <button id="oneBtn">100%</button>
+        <div class="tiny">휠+Ctrl(핀치)로 줌 · 휠 스크롤로 이동 · <b>중간버튼</b> 또는 <b>Space+드래그</b>로 패닝</div>
+      </div>
+    </div>
+
+    <!-- 우측 컨트롤 -->
+    <aside class="panel">
+      <section class="row">
+        <label><input type="checkbox" id="showGrid" checked> 그리드</label>
+        <label><input type="checkbox" id="showAxes" checked> 축 표시</label>
+        <label><input type="checkbox" id="mirrorLR"> 좌우 대칭</label>
+        <label><input type="checkbox" id="mirrorTB"> 상하 대칭</label>
+        <label><input type="checkbox" id="mirrorCenter"> 점대칭</label>
+        <button id="eraser">지우개</button>
+        <div class="tiny" id="info"></div>
+      </section>
+
+      <div class="k-sep"></div>
+
+      <section class="row">
+        <label>가로(열) <input id="colsInput" type="number" min="1" value="100" style="width:90px"></label>
+        <label>세로(행) <input id="rowsInput" type="number" min="1" value="100" style="width:90px"></label>
+        <button id="resizeBtn">크기 변경</button>
+      </section>
+
+      <div class="k-sep"></div>
+
+      <!-- 자원 매장량 -->
+      <section class="row">
+        <label>자원 매장량
+          <input id="resAmt" type="number" min="0" value="100" style="width:110px">
+        </label>
+        <div class="tiny">카테고리 4xx(자원) 칠할 때 적용됨</div>
+      </section>
+
+      <div class="k-sep"></div>
+
+      <!-- 팔레트 -->
+      <section>
+        <div class="tiny" style="margin-bottom:6px">카테고리</div>
+        <div id="catBar" class="row" style="flex-wrap:wrap"></div>
+
+        <div class="k-sep" style="margin:8px 0"></div>
+
+        <div class="tiny" style="margin-bottom:6px">타일 선택 (선택한 카테고리)</div>
+        <div id="tileList" class="row" style="flex-wrap:wrap"></div>
+      </section>
+
+      <!-- 번들 저장/불러오기(메타 포함) -->
+      <section>
+        <div class="tiny" style="margin-bottom:6px">번들 저장/불러오기(메타 포함)</div>
+        <div class="row">
+          <button id="saveBundle">런타임 저장(.runtime.json)</button>
+          <input type="file" id="loadBundle" accept=".json">
+          <button id="pickFolder">폴더 선택</button>
+          <span class="tiny" id="folderHint"></span>
+        </div>
+      </section>
+
+      <section>
+        <div class="row">
+          <button id="exportRuntime">런타임 JSON 내보내기</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    // ================== 설정 ==================
+    const TILE_BASE = 24;
+    const DEFAULT_TILE_ID = 100;
+    let selectedCat = 1; // 1=지나감, 2=못지나감, 3=건물, 4=자원
+
+    const getCategory = (id) => Math.floor(id / 100);
+    const getLocalId = (id) => id % 100;
+    const isBuilding = (id) => getCategory(id) === 3;
+    const isResource = (id) => getCategory(id) === 4;
+    const isStarting = (id) => Math.floor(id / 100) === 6;
+
+    const TILESET = {
+      100: { name: "Grass-0", color: "#8BDB81", passable: true, cost: 1 },
+      101: { name: "Grass-1", color: "#7AD070", passable: true, cost: 1 },
+      102: { name: "Roadcurveeast", color: "#000000", passable: true, cost: 1 },
+      103: { name: "Roadcurvenorth", color: "#000000", passable: true, cost: 1 },
+      104: { name: "Roadcurvesouth", color: "#000000", passable: true, cost: 1 },
+      105: { name: "Roadcurvewest", color: "#000000", passable: true, cost: 2 },
+      106: { name: "Roadx", color: "#000000", passable: false, cost: 999 },
+      107: { name: "Roady", color: "#000000", passable: true, cost: 0.5 },
+
+      201: { name: "Rock-Block", color: "#475569", passable: false, cost: 999 },
+      202: { name: "Water", color: "#3B82F6", passable: false, cost: 999 },
+
+      301: { name: "Hut 2x2", color: "#60A5FA", passable: false, cost: 0 },
+      302: { name: "Hall 3x3", color: "#3B82F6", passable: false, cost: 0 },
+
+      401: { name: "Magnetite", color: "#CACCCE", passable: true, cost: 2 },
+      402: { name: "Petroleum", color: "#000000", passable: true, cost: 2 },
+      403: { name: "Beryl", color: "#3ED4BE", passable: true, cost: 2 },
+
+      501: { name: "tree", color: "#024200", passable: false, cost: 0 },
+      502: { name: "trees", color: "#012100", passable: false, cost: 0 },
+      503: { name: "Wall", color: "#374151", passable: false, cost: 999 },
+
+      601: { name: "Start", color: "#22d3ee", passable: true, cost: 1 },
+    };
+
+    const BUILDING_SIZES = {
+      301: { w: 2, h: 2 },
+      302: { w: 3, h: 3 },
+    };
+
+    // ========== 초기 맵 ==========
+    let mapRows = 100, mapCols = 100;
+    let map = create2D(mapRows, mapCols, DEFAULT_TILE_ID);
+
+    // 메타 그리드
+    let buildingOcc = create2D(mapRows, mapCols, 0);
+    let resourceAmt = create2D(mapRows, mapCols, 0);
+    let buildingSize = create2D(mapRows, mapCols, null); // 앵커 지점에만 {w,h}
+
+    let resourceValue = 100;
+
+    // ========== 뷰/상태 ==========
+    let activeId = 101;
+    let eraseMode = false;
+
+    // 대칭/축 상태
+    let mirrorLR = false; // 좌우 대칭
+    let mirrorTB = false; // 상하 대칭
+    let showAxes = true;  // 중심축 표시
+    let mirrorCenter = false; // ★ 점대칭
+
+    // 카메라/줌
+    let scale = 1;
+    let camX = 0, camY = 0;
+    let isDown = false;
+    let panning = false;
+    let spaceHeld = false;
+    let lastX = 0, lastY = 0;
+    let hoverRC = null;
+
+    // 리드로우
+    let dpr = Math.max(1, window.devicePixelRatio || 1);
+    let needsDraw = true;
+    let rafId = 0;
+
+    // ========== DOM ==========
+    const canvasWrap = document.getElementById('canvasWrap');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const zoomEl = document.getElementById('zoom');
+    const showGridEl = document.getElementById('showGrid');
+    const showAxesEl = document.getElementById('showAxes');
+    const mirrorLREl = document.getElementById('mirrorLR');
+    const mirrorTBEl = document.getElementById('mirrorTB');
+    const mirrorCenterEl = document.getElementById('mirrorCenter'); // ★
+
+    const eraserBtn = document.getElementById('eraser');
+    const infoEl = document.getElementById('info');
+    const fitBtn = document.getElementById('fitBtn');
+    const oneBtn = document.getElementById('oneBtn');
+
+    const colsInput = document.getElementById('colsInput');
+    const rowsInput = document.getElementById('rowsInput');
+    const resizeBtn = document.getElementById('resizeBtn');
+
+    const resAmtInput = document.getElementById('resAmt');
+    const saveBundleBtn = document.getElementById('saveBundle');
+    const loadBundleInput = document.getElementById('loadBundle');
+
+    const catBar = document.getElementById('catBar');
+    const tileList = document.getElementById('tileList');
+    const pickFolderBtn = document.getElementById('pickFolder');
+    const folderHint = document.getElementById('folderHint');
+
+    const exportRuntimeBtn = document.getElementById('exportRuntime');
+
+    let currentFileName = "tilemap.runtime.json";
+    let currentDirHandle = null;
+
+    // ================== 유틸/공통 ==================
+    function create2D(r, c, val) { const a = new Array(r); for (let i = 0; i < r; i++) { a[i] = new Array(c).fill(val) } return a; }
+    function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+    function s() { return Math.max(6, Math.floor(TILE_BASE * scale)); } // 셀 크기
+
+    function worldToScreen(px, py) { return [px * s() + camX, py * s() + camY]; }
+    function screenToCell(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const cs = s();
+      const c = Math.floor((x - camX) / cs);
+      const r = Math.floor((y - camY) / cs);
+      if (r < 0 || c < 0 || r >= mapRows || c >= mapCols) return null;
+      return { r, c };
+    }
+
+    function markDirty() { needsDraw = true; if (!rafId) rafId = requestAnimationFrame(draw); }
+
+    function buildCategoryBar() {
+      catBar.innerHTML = '';
+      [1, 2, 3, 4, 5, 6].forEach(cat => {
+        const b = document.createElement('button');
+        b.className = 'chip';
+         b.textContent = (cat === 6 ? '스타팅' : `${cat}번 카테고리`);
+        if (selectedCat === cat) b.classList.add('active');
+        b.onclick = () => { selectedCat = cat; buildTileList(); markDirty(); };
+        catBar.appendChild(b);
+      });
+    }
+    function buildTileList() {
+      tileList.innerHTML = '';
+      const ids = Object.keys(TILESET).map(n => parseInt(n)).filter(id => getCategory(id) === selectedCat).sort((a, b) => a - b);
+      ids.forEach(id => {
+        const btn = document.createElement('button');
+        btn.className = `chip cat${selectedCat}`;
+        btn.style.background = TILESET[id].color || '#888';
+        btn.textContent = `${id} ${TILESET[id].name || ''}`;
+        if (!eraseMode && id === activeId) btn.classList.add('active');
+        btn.onclick = () => { activeId = id; eraseMode = false; updateUI(); buildTileList(); };
+        tileList.appendChild(btn);
+      });
+    }
+
+    async function verifyPermission(handle, write = false) {
+      if (!handle) return false;
+      const opts = write ? { mode: 'readwrite' } : {};
+      const q = await handle.queryPermission?.(opts);
+      if (q === 'granted') return true;
+      if (q === 'denied') return false;
+      const r = await handle.requestPermission?.(opts);
+      return r === 'granted';
+    }
+
+    // ========= 대칭 유틸 =========
+    function mirrorPoint(r, c, lr, tb) {
+      let rr = r, cc = c;
+      if (lr) cc = (mapCols - 1) - cc;
+      if (tb) rr = (mapRows - 1) - rr;
+      return { r: rr, c: cc };
+    }
+    function uniqueKey(rc) { return rc.r + ':' + rc.c; }
+
+    function mirrorTargets(rc) {
+      const targets = [];
+      const seen = new Set();
+
+      // 기본: 원본
+      const variants = [{ lr: false, tb: false }];
+
+      // 개별 축 대칭
+      if (mirrorLR) variants.push({ lr: true, tb: false });
+      if (mirrorTB) variants.push({ lr: false, tb: true });
+
+      // 점대칭: 중심에 대해 (LR+TB) 반사만 추가
+      // (LR과 TB를 동시에 켠 경우에도 자연스럽게 포함됨)
+      if (mirrorCenter || (mirrorLR && mirrorTB)) {
+        variants.push({ lr: true, tb: true });
+      }
+
+      for (const v of variants) {
+        const p = mirrorPoint(rc.r, rc.c, v.lr, v.tb);
+        if (p.r < 0 || p.c < 0 || p.r >= mapRows || p.c >= mapCols) continue;
+        const k = p.r + ':' + p.c;
+        if (!seen.has(k)) { seen.add(k); targets.push(p); }
+      }
+      return targets;
+    }
+
+    // ========= 건물 관련 =========
+    function eraseWholeBuildingAt(r, c) {
+      const id = buildingOcc[r][c];
+      if (id === 0) {
+        map[r][c] = DEFAULT_TILE_ID;
+        resourceAmt[r][c] = 0;
+        buildingSize[r][c] = null;
+        return;
+      }
+      // 건물 경계 찾기
+      let top = r, bottom = r, left = c, right = c;
+      while (top - 1 >= 0 && buildingOcc[top - 1][c] === id) top--;
+      while (bottom + 1 < mapRows && buildingOcc[bottom + 1][c] === id) bottom++;
+      while (left - 1 >= 0 && buildingOcc[top][left - 1] === id) left--;
+      while (right + 1 < mapCols && buildingOcc[top][right + 1] === id) right++;
+
+      const ar = top, ac = left;
+      for (let rr = top; rr <= bottom; rr++) {
+        for (let cc = left; cc <= right; cc++) {
+          buildingOcc[rr][cc] = 0;
+          resourceAmt[rr][cc] = 0;
+        }
+      }
+      map[ar][ac] = DEFAULT_TILE_ID;
+      buildingSize[ar][ac] = null;
+    }
+
+    // ================== 팔레트/정보 ==================
+    function updateUI() {
+      const sym = [
+        mirrorLR ? 'LR' : null,
+        mirrorTB ? 'TB' : null,
+        mirrorCenter ? 'C' : null
+      ].filter(Boolean).join('+') || 'off';
+      infoEl.textContent = `맵 ${mapRows}×${mapCols} | 선택 ${activeId} [${getCategory(activeId)}] | 줌 ${(scale * 100).toFixed(0)}% | 대칭 ${sym}`;
+      eraserBtn.textContent = eraseMode ? '지우개 (ON)' : '지우개';
+      zoomEl.value = String(scale);
+    }
+
+    // ================== 렌더 ==================
+    function resizeCanvasToWrap() {
+      const cssW = canvasWrap.clientWidth;
+      const cssH = canvasWrap.clientHeight;
+      const needW = Math.floor(cssW * dpr);
+      const needH = Math.floor(cssH * dpr);
+      if (canvas.width !== needW || canvas.height !== needH) {
+        canvas.width = needW; canvas.height = needH;
+        canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
+      }
+    }
+
+    function draw() {
+      rafId = 0; if (!needsDraw) return; needsDraw = false;
+      resizeCanvasToWrap();
+      ctx.imageSmoothingEnabled = false;
+
+      // 배경
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const cs = s();
+      const startC = clamp(Math.floor((-camX) / cs), 0, mapCols);
+      const endC = clamp(Math.ceil((canvas.width / dpr - camX) / cs), 0, mapCols);
+      const startR = clamp(Math.floor((-camY) / cs), 0, mapRows);
+      const endR = clamp(Math.ceil((canvas.height / dpr - camY) / cs), 0, mapRows);
+
+      // 타일
+      for (let r = startR; r < endR; r++) {
+        for (let c = startC; c < endC; c++) {
+          const id = map[r][c];
+          const color = (TILESET[id] && TILESET[id].color) ? TILESET[id].color : '#555';
+          const x = Math.floor((c * cs + camX) * dpr);
+          const y = Math.floor((r * cs + camY) * dpr);
+          const w = Math.ceil(cs * dpr), h = Math.ceil(cs * dpr);
+          ctx.fillStyle = color; ctx.fillRect(x, y, w, h);
+
+          if (isResource(id) && resourceAmt[r][c] > 0) {
+            const pad = Math.floor(2 * dpr), bw = Math.floor(w * 0.48), bh = Math.floor(h * 0.36);
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(x + w - bw - pad, y + h - bh - pad, bw, bh);
+            ctx.fillStyle = '#fff';
+            ctx.font = `${Math.max(8 * dpr, Math.floor(h * 0.28))}px monospace`;
+            ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+            ctx.fillText(String(resourceAmt[r][c]), x + w - pad - 2 * dpr, y + h - pad - 2 * dpr);
+          }
+        }
+      }
+
+      // 그리드
+      if (showGridEl.checked) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = Math.max(1, Math.floor(1 * dpr));
+        const x0 = Math.floor((startC * cs + camX) * dpr);
+        const x1 = Math.floor((endC * cs + camX) * dpr);
+        const y0 = Math.floor((startR * cs + camY) * dpr);
+        const y1 = Math.floor((endR * cs + camY) * dpr);
+
+        for (let r = startR; r <= endR; r++) {
+          const y = Math.floor((r * cs + camY) * dpr) + 0.5;
+          ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+        }
+        for (let c = startC; c <= endC; c++) {
+          const x = Math.floor((c * cs + camX) * dpr) + 0.5;
+          ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+        }
+      }
+
+      // 중심축
+      if (showAxes) {
+        ctx.lineWidth = Math.max(2, Math.floor(2 * dpr));
+        ctx.strokeStyle = 'rgba(34,211,238,0.9)'; // 시안
+        // 수직축
+        const xAxisWorld = (mapCols / 2) * cs + camX; // 짝수면 칸 사이 중앙
+        const xA = Math.floor(xAxisWorld * dpr) + 0.5;
+        ctx.beginPath(); ctx.moveTo(xA, 0); ctx.lineTo(xA, canvas.height); ctx.stroke();
+        // 수평축
+        const yAxisWorld = (mapRows / 2) * cs + camY;
+        const yA = Math.floor(yAxisWorld * dpr) + 0.5;
+        ctx.beginPath(); ctx.moveTo(0, yA); ctx.lineTo(canvas.width, yA); ctx.stroke();
+      }
+
+      // 건물 외곽선
+      ctx.strokeStyle = 'rgba(59,130,246,0.95)';
+      ctx.lineWidth = Math.max(2, Math.floor(2 * dpr));
+      for (let r = startR; r < endR; r++) {
+        for (let c = startC; c < endC; c++) {
+          const me = buildingOcc[r][c];
+          if (me === 0) continue;
+          const x = Math.floor((c * cs + camX) * dpr);
+          const y = Math.floor((r * cs + camY) * dpr);
+          const w = Math.ceil(cs * dpr), h = Math.ceil(cs * dpr);
+
+          if (r - 1 < 0 || buildingOcc[r - 1][c] !== me) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke(); }
+          if (r + 1 >= mapRows || buildingOcc[r + 1][c] !== me) { ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.stroke(); }
+          if (c - 1 < 0 || buildingOcc[r][c - 1] !== me) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.stroke(); }
+          if (c + 1 >= mapCols || buildingOcc[r][c + 1] !== me) { ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x + w, y + h); ctx.stroke(); }
+        }
+      }
+//스타팅 오버레이
+for (let r = startR; r < endR; r++) {
+  for (let c = startC; c < endC; c++) {
+    if (map[r][c] !== 601) continue;
+    const x = Math.floor((c * cs + camX) * dpr);
+    const y = Math.floor((r * cs + camY) * dpr);
+    const w = Math.ceil(cs * dpr), h = Math.ceil(cs * dpr);
+    const cx = x + w / 2, cy = y + h / 2;
+    const rad = Math.min(w, h) * 0.35;
+
+    ctx.lineWidth = Math.max(2, Math.floor(2 * dpr));
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+    ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - rad * 0.7, cy); ctx.lineTo(cx + rad * 0.7, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - rad * 0.7); ctx.lineTo(cx, cy + rad * 0.7); ctx.stroke();
+
+    ctx.font = `${Math.max(10 * dpr, Math.floor(h * 0.35))}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fillText('S', cx, cy);
+  }
+}
+
+      // 건물 미리보기(호버) — 대칭 포함
+      if (hoverRC && isBuilding(activeId) && !eraseMode) {
+        const sz = BUILDING_SIZES[activeId] || { w: 2, h: 2 };
+        const previews = mirrorTargets(hoverRC);
+        for (const { r: tr, c: tc } of previews) {
+          if (tr + sz.h > mapRows || tc + sz.w > mapCols) continue;
+          let blocked = false;
+          for (let rr = tr; rr < tr + sz.h; rr++) {
+            for (let cc = tc; cc < tc + sz.w; cc++) {
+              if (buildingOcc[rr][cc] !== 0) { blocked = true; break; }
+            }
+            if (blocked) break;
+          }
+          const ox = Math.floor((tc * cs + camX) * dpr);
+          const oy = Math.floor((tr * cs + camY) * dpr);
+          const ow = Math.ceil(sz.w * cs * dpr);
+          const oh = Math.ceil(sz.h * cs * dpr);
+          ctx.fillStyle = blocked ? 'rgba(239,68,68,0.25)' : 'rgba(59,130,246,0.25)';
+          ctx.fillRect(ox, oy, ow, oh);
+          ctx.lineWidth = Math.max(2, Math.floor(2 * dpr));
+          ctx.strokeStyle = blocked ? 'rgba(239,68,68,0.8)' : 'rgba(59,130,246,0.9)';
+          ctx.strokeRect(ox + 1, oy + 1, ow - 2, oh - 2);
+        }
+      }
+    }
+
+    // ================== 입력/조작 ==================
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyE') { eraseMode = !eraseMode; updateUI(); buildTileList(); markDirty(); e.preventDefault(); }
+      if (e.code === 'KeyP' || e.code === 'KeyB') { if (eraseMode) { eraseMode = false; updateUI(); buildTileList(); markDirty(); } e.preventDefault(); }
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button === 1 || (e.button === 0 && spaceHeld)) {
+        panning = true; lastX = e.clientX; lastY = e.clientY; canvas.style.cursor = 'grab'; e.preventDefault(); return;
+      }
+      if (e.button === 0) { isDown = true; paintAt(e); e.preventDefault(); }
+    });
+    canvas.addEventListener('mousemove', (e) => {
+      const rc = screenToCell(e.clientX, e.clientY);
+      hoverRC = rc; markDirty();
+      if (panning) {
+        const dx = e.clientX - lastX, dy = e.clientY - lastY;
+        camX += dx; camY += dy; lastX = e.clientX; lastY = e.clientY;
+        markDirty(); e.preventDefault(); return;
+      }
+      if (isDown) { paintAt(e); e.preventDefault(); }
+    });
+    window.addEventListener('mouseup', () => {
+      isDown = false;
+      if (panning) { panning = false; canvas.style.cursor = 'crosshair'; }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') { spaceHeld = true; canvas.style.cursor = 'grab'; e.preventDefault(); }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') { spaceHeld = false; if (!panning) canvas.style.cursor = 'crosshair'; }
+    });
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        const factor = Math.exp(-e.deltaY * 0.0015);
+        zoomAtPoint(e.clientX, e.clientY, factor);
+      } else {
+        camX -= e.deltaX; camY -= e.deltaY; markDirty();
+      }
+    }, { passive: false });
+
+    // ====== 브러시 로직(대칭 적용) ======
+    function paintAt(e) {
+      const base = screenToCell(e.clientX, e.clientY);
+      if (!base) return;
+      const targets = mirrorTargets(base);
+
+      if (eraseMode) {
+        for (const t of targets) { eraseWholeBuildingAt(t.r, t.c); }
+        markDirty(); return;
+      }
+
+      const id = activeId;
+
+      if (isBuilding(id)) {
+        const sz = BUILDING_SIZES[id] || { w: 2, h: 2 };
+        for (const t of targets) {
+          const tr = t.r, tc = t.c;
+          if (tr + sz.h > mapRows || tc + sz.w > mapCols) continue;
+          // 겹침 방지
+          let blocked = false;
+          for (let r = tr; r < tr + sz.h; r++) {
+            for (let c = tc; c < tc + sz.w; c++) {
+              if (buildingOcc[r][c] !== 0) { blocked = true; break; }
+            }
+            if (blocked) break;
+          }
+          if (blocked) continue;
+
+          map[tr][tc] = id;
+          for (let r = tr; r < tr + sz.h; r++) {
+            for (let c = tc; c < tc + sz.w; c++) {
+              buildingOcc[r][c] = id;
+              resourceAmt[r][c] = 0;
+            }
+          }
+          buildingSize[tr][tc] = { w: sz.w, h: sz.h };
+        }
+        markDirty(); return;
+      }
+
+      if (isResource(id)) {
+        for (const t of targets) {
+	  if (isStarting(map[t.r][t.c])) map[t.r][t.c] = DEFAULT_TILE_ID;
+          map[t.r][t.c] = id;
+          buildingOcc[t.r][t.c] = 0;
+          resourceAmt[t.r][t.c] = Math.max(0, resourceValue | 0);
+        }
+        markDirty(); return;
+      }
+
+if (isStarting(id)) {
+  for (const t of targets) {
+    if (isStarting(map[t.r][t.c])) {
+      // 이미 스타팅이면 지움(토글)
+      map[t.r][t.c] = DEFAULT_TILE_ID;
+    } else {
+      // 스타팅 찍기
+      map[t.r][t.c] = 601;
+      buildingOcc[t.r][t.c] = 0;
+      resourceAmt[t.r][t.c] = 0;
+    }
+  }
+  markDirty(); 
+  return;
+}
+
+      // 1xx/2xx
+      for (const t of targets) {
+        if (isStarting(map[t.r][t.c])) map[t.r][t.c] = DEFAULT_TILE_ID;
+        map[t.r][t.c] = id;
+        buildingOcc[t.r][t.c] = 0;
+        resourceAmt[t.r][t.c] = 0;
+      }
+      markDirty();
+    }
+
+    // 줌 유틸
+    function zoomAtPoint(clientX, clientY, factor) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (clientX - rect.left), y = (clientY - rect.top);
+      const oldS = s();
+      scale = clamp(scale * factor, parseFloat(zoomEl.min), parseFloat(zoomEl.max));
+      const newS = s();
+      const worldX = (x - camX) / oldS, worldY = (y - camY) / oldS;
+      camX = x - worldX * newS;
+      camY = y - worldY * newS;
+      updateUI(); markDirty();
+    }
+
+    // 보기 좋은 2D 문자열화
+    function pretty2D(arr, indent = '    ') { return arr.map(row => indent + JSON.stringify(row)).join(',\n'); }
+
+    function dateSlug(d = new Date()) {
+      const pad = n => String(n).padStart(2, '0');
+      const y = d.getFullYear(), m = pad(d.getMonth() + 1), dd = pad(d.getDate());
+      const hh = pad(d.getHours()), mm = pad(d.getMinutes());
+      return `${y}-${m}-${dd}-${hh}${mm}`;
+    }
+    function suggestNameForSave(base = "tilemap.runtime.json") {
+      const idx = base.lastIndexOf('.'); const stem = idx > 0 ? base.slice(0, idx) : base; const ext = idx > 0 ? base.slice(idx) : '.json';
+      return `${stem}.${dateSlug()}${ext}`;
+    }
+
+    // ================== 컨트롤 ==================
+    zoomEl.addEventListener('input', e => {
+      const target = parseFloat(e.target.value);
+      const rect = canvas.getBoundingClientRect();
+      zoomAtPoint(rect.left + rect.width / 2, rect.top + rect.height / 2, target / scale);
+    });
+    eraserBtn.addEventListener('click', () => { eraseMode = !eraseMode; updateUI(); markDirty(); });
+
+    showAxesEl.addEventListener('change', () => { showAxes = !!showAxesEl.checked; markDirty(); });
+    mirrorLREl.addEventListener('change', () => { mirrorLR = !!mirrorLREl.checked; updateUI(); markDirty(); });
+    mirrorTBEl.addEventListener('change', () => { mirrorTB = !!mirrorTBEl.checked; updateUI(); markDirty(); });
+    mirrorCenterEl.addEventListener('change', () => { mirrorCenter = !!mirrorCenterEl.checked; updateUI(); markDirty(); });
+
+
+    const fitToView = () => {
+      const cssW = canvasWrap.clientWidth, cssH = canvasWrap.clientHeight;
+      const fw = cssW / (mapCols * TILE_BASE);
+      const fh = cssH / (mapRows * TILE_BASE);
+      scale = clamp(Math.max(Math.min(fw, fh) * 0.95, parseFloat(zoomEl.min)), parseFloat(zoomEl.min), parseFloat(zoomEl.max));
+      const sz = s();
+      camX = (cssW - mapCols * sz) / 2;
+      camY = (cssH - mapRows * sz) / 2;
+      updateUI(); markDirty();
+    };
+    fitBtn.addEventListener('click', fitToView);
+    oneBtn.addEventListener('click', () => { scale = 1; fitToView(); });
+
+    resizeBtn.addEventListener('click', () => {
+      const newCols = clamp(parseInt(colsInput.value || mapCols), 1, 5000);
+      const newRows = clamp(parseInt(rowsInput.value || mapRows), 1, 5000);
+      const nextMap = create2D(newRows, newCols, DEFAULT_TILE_ID);
+      const nextOcc = create2D(newRows, newCols, 0);
+      const nextRes = create2D(newRows, newCols, 0);
+      const nextSize = create2D(newRows, newCols, null);
+      for (let r = 0; r < Math.min(mapRows, newRows); r++) {
+        for (let c = 0; c < Math.min(mapCols, newCols); c++) {
+          nextMap[r][c] = map[r][c];
+          nextOcc[r][c] = buildingOcc[r][c];
+          nextRes[r][c] = resourceAmt[r][c];
+          nextSize[r][c] = buildingSize[r][c];
+        }
+      }
+      mapRows = newRows; mapCols = newCols;
+      map = nextMap; buildingOcc = nextOcc; resourceAmt = nextRes; buildingSize = nextSize;
+      fitToView();
+    });
+
+    resAmtInput.addEventListener('input', () => { resourceValue = Math.max(0, parseInt(resAmtInput.value || '0') | 0); });
+
+    function extractBuildings(buildingOcc, buildingSize) {
+      const out = []; const R = buildingOcc.length, C = buildingOcc[0].length;
+      for (let r = 0; r < R; r++) {
+        for (let c = 0; c < C; c++) {
+          const sz = buildingSize[r][c];
+          const id = buildingOcc[r][c];
+          if (sz && id >= 300 && id < 400) { out.push({ id, r, c, w: sz.w, h: sz.h }); }
+        }
+      }
+      return out;
+    }
+//스타팅 좌표수집
+function collectStarts() {
+  const out = [];
+  for (let r = 0; r < mapRows; r++) {
+    for (let c = 0; c < mapCols; c++) {
+      if (map[r][c] === 601) out.push({ r, c });
+    }
+  }
+  return out;
+}
+    function makeRuntimeSnapshot() {
+      return {
+        tileWidth: 128, tileHeight: 64,
+        width: mapCols, height: mapRows,
+        tiles: map, resourceAmt: resourceAmt, building: extractBuildings(buildingOcc, buildingSize)
+      };
+    }
+    exportRuntimeBtn.addEventListener('click', () => {
+      const snap = makeRuntimeSnapshot();
+      const stem = (currentFileName || 'tilemap').replace(/\.json$/i, '');
+      const filename = `${stem}.runtime.json`;
+      const text = JSON.stringify(snap, null, 2);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+      a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    // ====== 번들 저장/불러오기 ======
+    pickFolderBtn.addEventListener('click', async () => {
+      try {
+        if (!window.showDirectoryPicker) { alert('이 브라우저는 폴더 선택을 지원하지 않는다(Chromium 계열에서 가능).'); return; }
+        const dir = await window.showDirectoryPicker({ id: 'tilemap-folder' });
+        if (await verifyPermission(dir, true)) { currentDirHandle = dir; folderHint.textContent = `저장 폴더: ${dir.name}`; }
+        else { alert('폴더 접근 권한이 거부됐다.'); }
+      } catch (e) { /* 취소 등 */ }
+    });
+
+    saveBundleBtn.addEventListener('click', async () => {
+      // Unified: save as runtime JSON and return
+      try {
+        const snap = makeRuntimeSnapshot();
+        const defaultName = suggestNameForSave((currentFileName || "tilemap.runtime.json"));
+        let filename = prompt("저장할 파일 이름을 입력하라:", defaultName) || defaultName;
+        if (!/\.runtime\.json$/i.test(filename)) filename = filename.replace(/\.json$/i, '') + '.runtime.json';
+        currentFileName = filename;
+        const text = JSON.stringify(snap, null, 2) + '\n';
+        if (currentDirHandle && window.showDirectoryPicker) {
+          try {
+            if (await verifyPermission(currentDirHandle, true)) {
+              const fileHandle = await currentDirHandle.getFileHandle(filename, { create: true });
+              const writable = await fileHandle.createWritable();
+              await writable.write(text); await writable.close(); return;
+            }
+          } catch (e) { console.warn('폴더 저장실패, 다운로드로백:', e); }
+        }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+        a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+        return;
+      } catch (e) { console.warn(e); }
+      const bundle = {
+        mapRows, mapCols, map, buildingOcc, resourceAmt, buildingSize,
+        settings: { DEFAULT_TILE_ID, TILE_BASE, scale, camX, camY, mirrorLR, mirrorTB, showAxes, mirrorCenter }, // ★ mirrorCenter 추가
+        timestamp: Date.now()
+      };
+      let text = JSON.stringify({
+        ...bundle,
+        map: "__MAP__", buildingOcc: "__BO__", resourceAmt: "__RA__"
+      }, null, 2)
+        .replace('"__MAP__"', `[\n${pretty2D(bundle.map)}\n  ]`)
+        .replace('"__BO__"', `[\n${pretty2D(bundle.buildingOcc)}\n  ]`)
+        .replace('"__RA__"', `[\n${pretty2D(bundle.resourceAmt)}\n  ]`) + '\n';
+
+      const defaultName = suggestNameForSave(currentFileName || "tilemap_bundle.json");
+      const filename = prompt("저장할 파일 이름을 입력하라:", defaultName) || defaultName;
+      currentFileName = filename;
+
+      if (currentDirHandle && window.showDirectoryPicker) {
+        try {
+          if (await verifyPermission(currentDirHandle, true)) {
+            const fileHandle = await currentDirHandle.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(text); await writable.close(); return;
+          }
+        } catch (e) { console.warn('폴더 저장 실패, 다운로드로 폴백:', e); }
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+      a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    loadBundleInput.addEventListener('change', async (e) => {
+      const f = e.target.files?.[0]; if (!f) return;
+      try {
+        currentFileName = f.name;
+        const text = await f.text();
+        const b = JSON.parse(text);
+        // If runtime JSON, load and return early
+        if (Array.isArray(b?.tiles) && Array.isArray(b.tiles[0])) {
+          const tiles = b.tiles;
+          const rows = tiles.length; const cols = tiles[0].length;
+          mapRows = rows; mapCols = cols;
+          map = tiles;
+          resourceAmt = Array.isArray(b.resourceAmt) && Array.isArray(b.resourceAmt[0]) ? b.resourceAmt : create2D(mapRows, mapCols, 0);
+          buildingOcc = create2D(mapRows, mapCols, 0);
+          buildingSize = create2D(mapRows, mapCols, null);
+          if (Array.isArray(b.building)) {
+            for (const it of b.building) {
+              const id = it.id | 0; const r = it.r | 0; const c = it.c | 0; const bw = Math.max(1, it.w | 0); const bh = Math.max(1, it.h | 0);
+              if (r < 0 || c < 0 || r >= mapRows || c >= mapCols) continue;
+              buildingSize[r][c] = { w: bw, h: bh };
+              for (let rr = r; rr < Math.min(mapRows, r + bh); rr++) {
+                for (let cc = c; cc < Math.min(mapCols, c + bw); cc++) {
+                  buildingOcc[rr][cc] = id;
+                }
+              }
+            }
+          }
+          rowsInput.value = mapRows; colsInput.value = mapCols;
+          updateUI(); fitToView(); markDirty();
+          return;
+        }
+        if (!Array.isArray(b.map) || !Array.isArray(b.buildingOcc) || !Array.isArray(b.resourceAmt)) {
+          throw new Error('형식 오류: map/buildingOcc/resourceAmt가 필요함');
+        }
+        map = b.map; buildingOcc = b.buildingOcc; resourceAmt = b.resourceAmt;
+        mapRows = map.length; mapCols = map[0]?.length || 0;
+        if (!mapRows || !mapCols) throw new Error('형식 오류: 빈 맵');
+
+        rowsInput.value = mapRows; colsInput.value = mapCols;
+        buildingSize = Array.isArray(b.buildingSize) ? b.buildingSize : create2D(mapRows, mapCols, null);
+
+        if (b.settings) {
+          scale = clamp(b.settings.scale ?? 1, parseFloat(zoomEl.min), parseFloat(zoomEl.max));
+          camX = b.settings.camX ?? 0; camY = b.settings.camY ?? 0;
+          mirrorLR = !!b.settings.mirrorLR; mirrorTB = !!b.settings.mirrorTB; showAxes = !!b.settings.showAxes;
+          mirrorCenter = !!b.settings.mirrorCenter;
+          mirrorLREl.checked = mirrorLR; mirrorTBEl.checked = mirrorTB; showAxesEl.checked = showAxes;
+          mirrorCenterEl.checked = mirrorCenter;
+        }
+
+        updateUI(); fitToView(); markDirty();
+      } catch (err) {
+        alert('번들 불러오기 오류: ' + err.message);
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    // ================== 시작 ==================
+    function init() {
+      dpr = Math.max(1, window.devicePixelRatio || 1);
+      buildCategoryBar(); buildTileList(); updateUI(); fitToView(); markDirty();
+    }
+    init();
+    window.addEventListener('resize', () => { markDirty(); });
+  </script>
+</body>
+
+</html>

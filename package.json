@@ -1,0 +1,18 @@
+{
+  "name": "rts-optimize",
+  "version": "1.0.0",
+  "main": "main.js",
+  "keywords": [],
+  "author": "silicon14",
+  "license": "MIT",
+  "description": "rts game",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "socket.io": "^4.8.1"
+  }
+}

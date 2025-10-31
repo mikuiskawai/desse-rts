@@ -1,0 +1,301 @@
+[
+  {
+    "type": "limestone",
+    "name": "건설자",
+    "speed": 2,
+    "radiusPx": 12,
+    "image": "/units/normal.png",
+    "attackimage": "/units/normal.png",
+    "walkingimage": "/units/normal-walking.png",
+    "workingimage": "/units/normal-working.png",
+    "workingimage2": "/units/normal-working2.png",
+    "atk": 5,
+    "hp": 100,
+    "range": 2,
+    "armor": 0,
+    "period": 1,
+    "energy": 0,
+    "population": 1,
+    "cost": {
+      "401": 100,
+      "402": 0,
+      "403": 0
+    },
+    "time": 10,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "n"
+  },
+  {
+    "type": "boltaction",
+    "name": "볼트액션",
+    "speed": 2,
+    "radiusPx": 12,
+    "image": "/units/boltaction.png",
+    "attackimage": "/units/boltaction-shooting.png",
+    "walkingimage": "/units/boltaction-walking.png",
+    "atk": 15,
+    "hp": 150,
+    "range": 5,
+    "armor": 1,
+    "period": 1,
+    "energy": 0,
+    "population": 1,
+    "cost": {
+      "401": 150,
+      "402": 0,
+      "403": 0
+    },
+    "time": 15,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "n"
+  },
+  {
+    "type": "uzi",
+    "name": "기관총",
+    "speed": 2.3,
+    "radiusPx": 12,
+    "image": "/units/uzi.png",
+    "attackimage": "/units/uzi-shooting.png",
+    "walkingimage": "/units/uzi-walking.png",
+    "atk": 5,
+    "hp": 100,
+    "range": 3,
+    "armor": 1,
+    "period": 0.25,
+    "energy": 0,
+    "population": 1,
+    "cost": {
+      "401": 150,
+      "402": 0,
+      "403": 0
+    },
+    "time": 15,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "n"
+  },
+  {
+    "type": "shotgun",
+    "name": "샷건",
+    "speed": 3,
+    "radiusPx": 12,
+    "image": "/units/shotgun.png",
+    "attackimage": "/units/shotgun-shooting.png",
+    "walkingimage": "/units/shotgun-walking.png",
+    "atk": 25,
+    "hp": 150,
+    "range": 2,
+    "armor": 0,
+    "period": 1,
+    "energy": 0,
+    "population": 1,
+    "cost": {
+      "401": 150,
+      "402": 0,
+      "403": 0
+    },
+    "time": 15,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "r"
+  },
+  {
+    "type": "quartz",
+    "name": "저격수",
+    "speed": 1.5,
+    "radiusPx": 12,
+    "image": "/units/awm.png",
+    "attackimage": "/units/awm-shooting.png",
+    "walkingimage": "/units/awm-walking.png",
+    "atk": 72,
+    "hp": 200,
+    "range": 7,
+    "armor": 2,
+    "period": 4,
+    "energy": 0,
+    "population": 1,
+    "cost": {
+      "401": 200,
+      "402": 50,
+      "403": 0
+    },
+    "time": 20,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "p"
+  },
+  {
+    "type": "martensite",
+    "name": "기관단총",
+    "speed": 1.8,
+    "radiusPx": 12,
+    "image": "/units/machinegun.png",
+    "attackimage": "/units/machinegun-shooting.png",
+    "walkingimage": "/units/machinegun-walking.png",
+    "atk": 6,
+    "hp": 250,
+    "range": 4,
+    "armor": 1,
+    "period": 0.2,
+    "energy": 0,
+    "population": 1,
+    "cost": {
+      "401": 200,
+      "402": 50,
+      "403": 0
+    },
+    "time": 20,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "n"
+  },
+  {
+    "type": "niter",
+    "name": "라이플",
+    "speed": 3,
+    "radiusPx": 12,
+    "image": "/units/rifle.png",
+    "attackimage": "/units/rifle-shooting.png",
+    "walkingimage": "/units/rifle-walking.png",
+    "atk": 15,
+    "hp": 200,
+    "range": 3,
+    "armor": 0,
+    "period": 0.5,
+    "energy": 0,
+    "population": 1,
+    "cost": {
+      "401": 200,
+      "402": 50,
+      "403": 0
+    },
+    "time": 20,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "n"
+  },
+  {
+    "type": "rpg",
+    "name": "RPG",
+    "speed": 1.2,
+    "radiusPx": 12,
+    "image": "/units/rpg.png",
+    "attackimage": "/units/rpg-shooting.png",
+    "walkingimage": "/units/rpg-walking.png",
+    "atk": 200,
+    "hp": 200,
+    "range": 8,
+    "armor": 0,
+    "period": 5,
+    "energy": 0,
+    "population": 2,
+    "cost": {
+      "401": 150,
+      "402": 100,
+      "403": 0
+    },
+    "time": 25,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "t"
+  },
+  {
+    "type": "flamethrower",
+    "name": "화염방사기",
+    "speed": 2.7,
+    "radiusPx": 12,
+    "image": "/units/flamethrower.png",
+    "attackimage": "/units/flamethrower-shooting.png",
+    "walkingimage": "/units/flamethrower-walking.png",
+    "atk": 40,
+    "hp": 300,
+    "range": 3,
+    "armor": 0,
+    "period": 0.8,
+    "energy": 0,
+    "population": 2,
+    "cost": {
+      "401": 150,
+      "402": 100,
+      "403": 0
+    },
+    "time": 25,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "r"
+  },
+  {
+    "type": "derringer",
+    "name": "데린저",
+    "speed": 3.5,
+    "radiusPx": 12,
+    "image": "/units/derringer.png",
+    "attackimage": "/units/derringer-shooting.png",
+    "walkingimage": "/units/derringer-walking.png",
+    "atk": 50,
+    "hp": 150,
+    "range": 2,
+    "armor": 2,
+    "period": 1,
+    "energy": 0,
+    "population": 2,
+    "cost": {
+      "401": 150,
+      "402": 100,
+      "403": 0
+    },
+    "time": 25,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "t"
+  },
+  {
+    "type": "observer",
+    "name": "관찰자",
+    "speed": 4,
+    "radiusPx": 12,
+    "image": "/units/observer.png",
+    "attackimage": "/units/observer.png",
+    "walkingimage": "/units/observer-walking.png",
+    "atk": 5,
+    "hp": 100,
+    "range": 1,
+    "armor": 0,
+    "period": 1,
+    "energy": 0,
+    "population": 1,
+    "cost": {
+      "401": 150,
+      "402": 0,
+      "403": 0
+    },
+    "time": 20,
+    "selectionBox": {
+      "w": 0.8,
+      "h": 1
+    },
+    "attackType": "n"
+  }
+]

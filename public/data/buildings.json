@@ -1,0 +1,207 @@
+[
+  {
+    "type": "nexus",
+    "name": "Nexus",
+    "footprint": {"w": 3, "h": 3},
+    "image": "/structures/nexus.png",
+    "hp": 1500,
+    "buildTime": 18,
+    "cost": {"401": 250, "402": 0, "403": 0},
+    "imageScaleTiles": 3.0,       
+    "imageYOffsetTiles": 2.5      
+  },
+  {
+    "type": "armory",
+    "name": "Armory",
+    "footprint": {"w": 1, "h": 2},
+    "image": "/structures/armory.png",
+    "hp": 300,
+    "buildTime": 16,
+    "cost": {"401": 150, "402": 0, "403": 0},
+    "imageScaleTiles": 1.6,
+    "imageYOffsetTiles": 1.0,
+    "imageXOffsetTiles": -0.5
+  },
+  {
+    "type": "armory2",
+    "name": "Armory II",
+    "footprint": {"w": 1, "h": 2},
+    "image": "/structures/armory.png",
+    "hp": 350,
+    "buildTime": 18,
+    "upgradeTime": 12,
+    "cost": {"401": 225, "402": 0, "403": 0},
+    "imageScaleTiles": 1.6,
+    "imageYOffsetTiles": 1.0,
+    "imageXOffsetTiles": -0.5
+  },
+  {
+    "type": "barracks",
+    "name": "Barracks",
+    "footprint": {"w": 2, "h": 2},
+    "image": "/structures/barracks.png",
+    "hp": 500,
+    "buildTime": 17,
+    "cost": {"401": 200, "402": 0, "403": 0},
+    "imageScaleTiles": 2.0,
+    "imageYOffsetTiles": 1.5
+  },
+  {
+    "type": "barracks2",
+    "name": "Barracks II",
+    "footprint": {"w": 2, "h": 2},
+    "image": "/structures/barracks.png",
+    "hp": 600,
+    "buildTime": 19,
+    "upgradeTime": 14,
+    "cost": {"401": 300, "402": 0, "403": 0},
+    "imageScaleTiles": 2.0,
+    "imageYOffsetTiles": 1.5
+  },
+  {
+    "type": "factory",
+    "name": "Factory",
+    "footprint": {"w": 3, "h": 3},
+    "image": "/structures/factory.png",
+    "hp": 1000,
+    "buildTime": 19,
+    "cost": {"401": 300, "402": 0, "403": 0},
+    "imageScaleTiles": 3.0,
+    "imageYOffsetTiles": 2.5
+  }
+  ,
+  {
+    "type": "factory2",
+    "name": "Factory II",
+    "footprint": {"w": 3, "h": 3},
+    "image": "/structures/factory.png",
+    "hp": 1100,
+    "buildTime": 21,
+    "upgradeTime": 16,
+    "cost": {"401": 450, "402": 0, "403": 0},
+    "imageScaleTiles": 3.0,
+    "imageYOffsetTiles": 2.5
+  },
+  {
+    "type": "magnetitemine",
+    "name": "Magnetitemine",
+    "footprint": {"w": 1, "h": 1},
+    "image": "/tiles/magnetitemine.png",
+    "hp": 500,
+    "buildTime": 15,
+    "cost": {"401": 50, "402": 0, "403": 0},
+    "imageScaleTiles": 1.0,
+    "imageYOffsetTiles": 0.5
+  },
+  {
+    "type": "magnetitemine2",
+    "name": "Magnetitemine2",
+    "footprint": {"w": 1, "h": 1},
+    "image": "/tiles/magnetitemine2.png",
+    "hp": 500,
+    "buildTime": 16,
+    "cost": {"401": 100, "402": 0, "403": 0},
+    "imageScaleTiles": 1.0,
+    "imageYOffsetTiles": 0.5
+  },
+  {
+    "type": "berylmine",
+    "name": "berylmine",
+    "footprint": {"w": 1, "h": 1},
+    "image": "/tiles/berylmine.png",
+    "hp": 500,
+    "buildTime": 15,
+    "cost": {"401": 100, "402": 0, "403": 0},
+    "imageScaleTiles": 1.0,
+    "imageYOffsetTiles": 0.5
+  },
+  {
+    "type": "berylmine2",
+    "name": "berylmine2",
+    "footprint": {"w": 1, "h": 1},
+    "image": "/tiles/berylmine2.png",
+    "hp": 500,
+    "buildTime": 16,
+    "cost": {"401": 150, "402": 0, "403": 0},
+    "imageScaleTiles": 1.0,
+    "imageYOffsetTiles": 0.5
+  },
+  {
+    "type": "oilrig",
+    "name": "oilrig",
+    "footprint": {"w": 1, "h": 1},
+    "image": "/tiles/oilrig.png",
+    "hp": 500,
+    "buildTime": 15,
+    "cost": {"401": 75, "402": 0, "403": 0},
+    "imageScaleTiles": 1.0,
+    "imageYOffsetTiles": 0.5
+  }
+  ,
+  {
+    "type": "oilrig2",
+    "name": "oilrig2",
+    "footprint": {"w": 1, "h": 1},
+    "image": "/tiles/oilrig2.png",
+    "hp": 500,
+    "buildTime": 16,
+    "cost": {"401": 150, "402": 0, "403": 0},
+    "imageScaleTiles": 1.0,
+    "imageYOffsetTiles": 0.5
+  },
+  {
+    "type": "bay",
+    "name": "Bay",
+    "footprint": {"w": 2, "h": 2},
+    "image": "/structures/barracks.png",
+    "hp": 600,
+    "buildTime": 18,
+    "cost": {"401": 250, "402": 0, "403": 0},
+    "imageScaleTiles": 2.0,
+    "imageYOffsetTiles": 1.5
+  },
+  {
+    "type": "defendtower",
+    "name": "Defense Tower",
+    "footprint": {"w": 1, "h": 1},
+    "image": "/structures/armory.png",
+    "hp": 800,
+    "buildTime": 16,
+    "cost": {"401": 200, "402": 0, "403": 0},
+    "imageScaleTiles": 1.5,
+    "imageYOffsetTiles": 1.0
+  },
+  {
+    "type": "observe",
+    "name": "Observe Tower",
+    "footprint": {"w": 1, "h": 1},
+    "image": "/structures/armory.png",
+    "hp": 400,
+    "buildTime": 12,
+    "cost": {"401": 150, "402": 0, "403": 0},
+    "imageScaleTiles": 1.5,
+    "imageYOffsetTiles": 1.0
+  },
+  {
+    "type": "special",
+    "name": "Special Lab",
+    "footprint": {"w": 2, "h": 2},
+    "image": "/structures/factory.png",
+    "hp": 700,
+    "buildTime": 20,
+    "cost": {"401": 350, "402": 0, "403": 0},
+    "imageScaleTiles": 2.0,
+    "imageYOffsetTiles": 1.5
+  },
+  {
+    "type": "mine3",
+    "name": "Advanced Mine",
+    "footprint": {"w": 2, "h": 2},
+    "image": "/structures/factory.png",
+    "hp": 700,
+    "buildTime": 20,
+    "cost": {"401": 300, "402": 0, "403": 0},
+    "imageScaleTiles": 2.0,
+    "imageYOffsetTiles": 1.5
+  }
+]
